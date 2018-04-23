@@ -115,16 +115,16 @@ Workspace <- R6::R6Class("Workspace",
 #'
 #' internal use only
 #' @param uri the file path
-#' @param lintfile the actual file to lint
+#' @param document the list of strings of the document; could be NULL
 #' @export
-workspace_sync <- function(uri, lintfile) {
+workspace_sync <- function(uri, document) {
     packages <- character(0)
+    file_path <- path_from_uri(uri)
 
-    if (is.null(lintfile)) {
-        lintfile <- path_from_uri(uri)
-        document <- readLines(lintfile)
+    if (is.null(document)) {
+        document <- readLines(file_path)
 
-        # only check for packages when opening and saving files, i.e., when lintfile is NULL
+        # only check for packages when opening and saving files, i.e., when document is NULL
         # TODO: check DESCRIPTION of an R Package
 
         result <- stringr::str_match_all(document, "^(?:library|require)\\(['\"]?(.*?)['\"]?\\)")
@@ -133,11 +133,10 @@ workspace_sync <- function(uri, lintfile) {
                 packages <- append(packages, result[[j]][1, 2])
             }
         }
-
     }
 
     diagnostics <- tryCatch({
-        diagnose_file(lintfile)
+        diagnose_file(if (is.null(document)) file_path else paste(document, collapse = "\n"))
     }, error = function(e) NULL)
 
     list(packages = packages, diagnostics = diagnostics)
@@ -149,33 +148,19 @@ process_sync_input_dict <- function(self) {
 
     for (uri in sync_input_dict$keys()) {
         if (sync_output_dict$has(uri)) {
-            item <- sync_output_dict$pop(uri)
-            process <- item$process
+            process <- sync_output_dict$pop(uri)
             if (process$is_alive()) try(process$kill())
-            lintfile <- item$lintfile
-            if (!is.null(lintfile) && file.exists(lintfile)) {
-                file.remove(lintfile)
-            }
         }
 
         document <- sync_input_dict$pop(uri)
-        if (is.null(document)) {
-            lintfile <- NULL
-        } else {
-            lintfile <- tempfile(fileext = ".R")
-            write(document, file = lintfile)
-        }
 
         sync_output_dict$set(
             uri,
-            list(
-                process = callr::r_bg(
-                    function(uri, lintfile) {
-                        languageserver::workspace_sync(uri, lintfile)
-                    },
-                    list(uri = uri, lintfile = lintfile)
-                ),
-                lintfile = lintfile
+            callr::r_bg(
+                function(uri, document) {
+                    languageserver::workspace_sync(uri, document)
+                },
+                list(uri = uri, document = document)
             )
         )
     }
@@ -183,8 +168,7 @@ process_sync_input_dict <- function(self) {
 
 process_sync_output_dict <- function(self) {
     for (uri in self$sync_output_dict$keys()) {
-        item <- self$sync_output_dict$get(uri)
-        process <- item$process
+        process <- self$sync_output_dict$get(uri)
 
         if (!is.null(process) && !process$is_alive()) {
             result <- process$get_result()
@@ -206,10 +190,6 @@ process_sync_output_dict <- function(self) {
 
             # cleanup
             self$sync_output_dict$remove(uri)
-            lintfile <- item$lintfile
-            if (!is.null(lintfile) && file.exists(lintfile)) {
-                file.remove(lintfile)
-            }
         }
     }
 }

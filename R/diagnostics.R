@@ -36,8 +36,8 @@ diagnostic_from_lint <- function(result) {
     )
 }
 
-diagnose_file <- function(path) {
-    diagnostics <- lapply(lintr::lint(path), diagnostic_from_lint)
+diagnose_file <- function(path_or_doc) {
+    diagnostics <- lapply(lintr::lint(path_or_doc), diagnostic_from_lint)
     names(diagnostics) <- NULL
     diagnostics
 }
