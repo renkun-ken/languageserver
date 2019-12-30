@@ -42,7 +42,9 @@ Namespace <- R6::R6Class("Namespace",
             if (!is.null(args)) {
                 sig <- format(args)
                 sig <- sig[-length(sig)]
-                paste0(trimws(sig, which = "left"), collapse = "")
+                sig <- paste0(trimws(sig, which = "left"), collapse = "")
+                sig <- gsub("^function\\s*", funct, sig)
+                sig
             }
         },
 
@@ -105,6 +107,7 @@ GlobalNameSpace <- R6::R6Class("GlobalNameSpace",
         formals = list(),
         definitions = list(),
         uris = list(),
+        documentation = list(),
 
         initialize = function() {
             self$package_name <- WORKSPACE
@@ -132,9 +135,11 @@ GlobalNameSpace <- R6::R6Class("GlobalNameSpace",
             self$exports <- unique(c(self$nonfuncts, self$functs))
             self$signatures <- list()
             self$formals <- list()
+            self$documentation <- list()
             for (item in parse_data) {
                 self$signatures <- merge_list(self$signatures, item$signatures)
                 self$formals <- merge_list(self$formals, item$formals)
+                self$documentation <- merge_list(self$documentation, item$documentation)
             }
         }
     )
