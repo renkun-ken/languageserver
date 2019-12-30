@@ -19,12 +19,6 @@ hover_reply <- function(id, uri, workspace, document, point) {
 
     sig <- workspace$get_signature(token_result$token, signs)
     contents <- NULL
-
-    if (!is.null(sig)) {
-        logger$info("sig: ", sig)
-        sig <- trimws(gsub("function\\s*", token_result$token, sig))
-    }
-
     resolved <- FALSE
     xdoc <- workspace$get_xml_doc(uri)
 

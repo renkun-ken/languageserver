@@ -19,7 +19,6 @@ signature_reply <- function(id, uri, workspace, document, point) {
         sig <- workspace$get_signature(result$token, result$package)
         logger$info("sig: ", sig)
         if (!is.null(sig)) {
-            sig <- trimws(gsub("function\\s*", result$token, sig))
             doc <- workspace$get_documentation(result$token, result$package)
             if (is.null(doc$description)) {
                 documentation <- ""
