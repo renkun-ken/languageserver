@@ -279,7 +279,7 @@ completion_item_resolve_reply <- function(id, workspace, params) {
             doc <- workspace$get_documentation(params$label, params$data$package)
             doc_string <- NULL
             if (is.character(doc)) {
-                doc_string <- paste0(doc, collapse = "\n\n")
+                doc_string <- doc
             } else if (is.list(doc) && is.character(doc$description)) {
                 doc_string <- doc$description
             }
