@@ -28,12 +28,6 @@ hover_reply <- function(id, uri, workspace, document, point) {
     sig <- workspace$get_signature(token_result$token, signs,
         exported_only = token_result$accessor != ":::")
     contents <- NULL
-
-    if (!is.null(sig)) {
-        logger$info("sig: ", sig)
-        sig <- trimws(gsub("function\\s*", token_result$token, sig))
-    }
-
     resolved <- FALSE
     xdoc <- workspace$get_xml_doc(uri)
 
@@ -66,14 +60,16 @@ hover_reply <- function(id, uri, workspace, document, point) {
                             def_line1 <- as.integer(xml_attr(last_def, "line1"))
                             def_line2 <- def_line1
                         }
-                        def_line1 <- detect_comments(document$content, def_line1 - 1) + 1
-                        def_indent <- detect_indention(document$content, def_line1 - 1, def_line2 - 1)
-                        if (def_indent == 0) {
-                            def_text <- document$line(seq.int(def_line1, def_line2))
-                        } else {
-                            def_text <- remove_indention(document$content, def_line1 - 1, def_line2 - 1, def_indent)
+                        def_text <- trimws(paste0(document$line(seq.int(def_line1, def_line2)),
+                            collapse = "\n"))
+                        doc_text <- NULL
+                        doc_line1 <- detect_comments(document$content, def_line1 - 1) + 1
+                        if (doc_line1 < def_line1) {
+                            doc_text <- paste0(
+                                uncomment(document$line(seq.int(doc_line1, def_line1 - 1))),
+                                    collapse = "\n\n")
                         }
-                        contents <- sprintf("```r\n%s\n```", paste0(def_text, collapse = "\n"))
+                        contents <- c(sprintf("```r\n%s\n```", def_text), doc_text)
                         resolved <- TRUE
                     }
                 }
@@ -88,18 +84,20 @@ hover_reply <- function(id, uri, workspace, document, point) {
                         package <- NULL
                     }
                     doc <- workspace$get_documentation(funct, package, isf = TRUE)
-                    doc_string <- doc$arguments[[token_text]]
-                    if (is.null(doc_string)) {
-                        doc_string <- doc$arguments$...
-                        token_text <- "..."
+                    doc_string <- NULL
+                    if (is.list(doc)) {
+                        doc_string <- doc$arguments[[token_text]]
+                        if (is.null(doc_string)) {
+                            doc_string <- doc$arguments$...
+                            token_text <- "..."
+                        }
                     }
                     if (!is.null(doc_string)) {
                         sig <- workspace$get_signature(funct, package)
                         if (is.null(sig)) {
                             contents <- doc_string
                         } else {
-                            sig <- trimws(gsub("function\\s*", funct,
-                                stringr::str_trunc(sig, 300)))
+                            sig <- stringr::str_trunc(sig, 300)
                             contents <- c(
                                 sprintf("```r\n%s\n```", sig),
                                 sprintf("`%s`: %s", token_text, doc_string))
@@ -132,7 +130,11 @@ hover_reply <- function(id, uri, workspace, document, point) {
     if (!resolved) {
         contents <- workspace$get_help(token_result$token, token_result$package)
         if (is.null(contents) && !is.null(sig)) {
-            contents <- sprintf("```r\n%s\n```", sig)
+            doc_text <- workspace$get_documentation(token_result$token, token_result$package)
+            if (is.character(doc_text)) {
+                doc_text <- paste0(doc_text, collapse = "\n\n")
+            }
+            contents <- c(sprintf("```r\n%s\n```", sig), doc_text)
         }
     }
 
