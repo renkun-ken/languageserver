@@ -37,7 +37,8 @@ Suggests:
     processx,
     purrr,
     testthat (>= 2.1.0),
-    withr
+    withr,
+    roxygen2
 ByteCompile: yes
 Encoding: UTF-8
 LazyData: true

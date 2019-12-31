@@ -168,6 +168,46 @@ expr_range <- function(srcref) {
     )
 }
 
+find_roxy_item <- function(x, tag) {
+    for (item in x) {
+        if (item$tag == tag) {
+            return(item)
+        }
+    }
+}
+
+find_roxy_items <- function(x, tag) {
+    selector <- vapply(x, function(item) item$tag == tag,
+        logical(1), USE.NAMES = FALSE)
+    x[selector]
+}
+
+get_documentation_from_roxy_block <- function(x) {
+    title <- find_roxy_item(x, "title")$val
+    description <- find_roxy_item(x, "description")$val
+    if (is.null(description)) {
+        description <- title
+    }
+    params <- find_roxy_items(x, "param")
+    argnames <- vapply(params, function(param) param$val$name,
+        character(1), USE.NAMES = FALSE)
+    arguments <- lapply(params, function(param) param$val$description)
+    names(arguments) <- argnames
+    list(title = title,
+        description = description,
+        arguments = arguments)
+}
+
+parse_documentation <- function(content, env) {
+    if (requireNamespace("roxygen2", quietly = FALSE)) {
+        roxy <- roxygen2::parse_text(content, baseenv())
+        for (item in roxy) {
+            env$documentation[[item$object$topic]] <- get_documentation_from_roxy_block(item$tag)
+        }
+    }
+    env
+}
+
 
 parse_expr <- function(content, expr, env, level = 0L, srcref = attr(expr, "srcref")) {
     if (length(expr) == 0L || is.symbol(expr)) {
@@ -265,6 +305,7 @@ parse_document <- function(path, content = NULL, resolve = FALSE) {
         }
         env <- parse_env()
         parse_expr(content, expr, env)
+        parse_documentation(content, env)
         xml_data <- xmlparsedata::xml_parse_data(expr)
         env$xml_data <- xml_data
         if (resolve) {
