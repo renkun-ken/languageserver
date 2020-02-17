@@ -292,12 +292,15 @@ look_forward <- function(text) {
 
 look_backward <- function(text) {
     matches <- stringr::str_match(
-        text, "(?<!\\$)(?:\\b|(?=\\.))(?:([a-zA-Z][a-zA-Z0-9.]+)(:::?))?((?:[^\\W_]|\\.)(?:[^\\W]|\\.)*)?$")
+        text, "(?<!\\$)(?:\\b|(?=\\.))(?:([a-zA-Z][a-zA-Z0-9.]+)(:::?))?((?:[^\\W_]|\\.)(?:[^\\W]|\\.)*)?([$@])?((?:[^\\W_]|\\.)(?:[^\\W]|\\.)*)?$"
+    )
     list(
         full_token = na_to_empty_string(matches[1]),
-        package  = na_to_empty_string(matches[2]),
+        namepsace  = na_to_empty_string(matches[2]),
         accessor = na_to_empty_string(matches[3]),
-        token = na_to_empty_string(matches[4])
+        symbol = na_to_empty_string(matches[4]),
+        extractor = na_to_empty_string(matches[5]),
+        element = na_to_empty_string(matches[6])
     )
 }
 
