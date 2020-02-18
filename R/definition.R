@@ -20,7 +20,7 @@ definition_reply <- function(id, uri, workspace, document, point) {
     result <- NULL
 
     xdoc <- workspace$get_parse_data(uri)$xml_doc
-    if (token_result$accessor == "" && !is.null(xdoc)) {
+    if (token_result$accessor == "" && token_result$extractor == "" && !is.null(xdoc)) {
         row <- point$row + 1
         col <- point$col + 1
         token <- xdoc_find_token(xdoc, row, col)
@@ -61,7 +61,7 @@ definition_reply <- function(id, uri, workspace, document, point) {
     }
 
     if (!resolved) {
-        result <- workspace$get_definition(token_result$token, token_result$package,
+        result <- workspace$get_definition(token_result$symbol, token_result$package,
             exported_only = token_result$accessor != ":::")
     }
 

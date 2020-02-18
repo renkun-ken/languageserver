@@ -10,17 +10,17 @@ signature_reply <- function(id, uri, workspace, document, point) {
         return(Response$new(id, list(signatures = NULL)))
     }
 
-    result <- document$detect_call(point)
-
+    call_result <- document$detect_call(point)
+    logger$info("signature_reply:", call_result)
     SignatureInformation <- list()
     activeSignature <- -1
 
-    if (nzchar(result$token)) {
-        sig <- workspace$get_signature(result$token, result$package,
-            exported_only = result$accessor != ":::")
+    if (nzchar(call_result$symbol) && call_result$extractor == "") {
+        sig <- workspace$get_signature(call_result$symbol, call_result$package,
+            exported_only = call_result$accessor != ":::")
         logger$info("sig: ", sig)
         if (!is.null(sig)) {
-            doc <- workspace$get_documentation(result$token, result$package, isf = TRUE)
+            doc <- workspace$get_documentation(call_result$symbol, call_result$package, isf = TRUE)
             doc_string <- ""
             if (is.character(doc)) {
                 doc_string <- doc

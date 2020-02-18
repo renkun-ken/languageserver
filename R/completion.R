@@ -251,10 +251,10 @@ completion_reply <- function(id, uri, workspace, document, point) {
     token_result <- document$detect_token(point, forward = FALSE)
 
     full_token <- token_result$full_token
-    token <- token_result$token
+    token <- token_result$symbol
     package <- token_result$package
 
-    if (nzchar(full_token)) {
+    if (nzchar(full_token) && token_result$extractor == "") {
         if (is.null(package)) {
             completions <- c(
                 completions,
@@ -269,11 +269,11 @@ completion_reply <- function(id, uri, workspace, document, point) {
     }
 
     call_result <- document$detect_call(point)
-    if (nzchar(call_result$token)) {
+    if (nzchar(call_result$symbol) && call_result$extractor == "") {
         completions <- c(
             completions,
             arg_completion(workspace, token,
-                call_result$token, call_result$package,
+                call_result$symbol, call_result$package,
                 exported_only = call_result$accessor != ":::"))
     }
 

@@ -43,21 +43,17 @@ Document <- R6::R6Class(
 
             # look forward
             if (forward) {
-                right_token <- look_forward(text_after)$token
+                right_token <- look_forward(text_after)$symbol
                 end <- col + nchar(right_token)
             } else {
                 right_token <- ""
                 end <- col
             }
 
-            matches <- look_backward(substr(text, 1, end))
-            return(list(
-                full_token = matches$full_token,
-                right_token = right_token,
-                package = empty_string_to_null(matches$package),
-                accessor = matches$accessor,
-                token = matches$token
-            ))
+            result <- look_backward(substr(text, 1, end))
+            result$package <- empty_string_to_null(result$package)
+            result$right_token <- right_token
+            result
         },
 
         detect_call = function(point) {
@@ -75,17 +71,12 @@ Document <- R6::R6Class(
             logger$info("bracket is", bracket)
 
             if (loc[1] < 0 || loc[2] < 0 || bracket != "(")
-                return(list(token = ""))
+                return(list(symbol = ""))
 
             result <- self$find_token(loc[1], loc[2], forward = FALSE)
             logger$info("call:", result)
 
-            list(
-                full_token = result$full_token,
-                package = result$package,
-                accessor = result$accessor,
-                token = result$token
-            )
+            result
         },
 
         detect_token = function(point, forward = TRUE) {
@@ -98,16 +89,11 @@ Document <- R6::R6Class(
             col_end <- col + nchar(result$right_token)
             col_start <- col_end - nchar(result$full_token)
 
-            list(
-                range = list(
-                    start = list(row = row, col = col_start),
-                    end = list(row = row, col = col_end)
-                ),
-                full_token = result$full_token,
-                package = result$package,
-                accessor = result$accessor,
-                token = result$token
+            result$range <- list(
+                start = list(row = row, col = col_start),
+                end = list(row = row, col = col_end)
             )
+            result
         },
 
         from_lsp_position = function(position) {

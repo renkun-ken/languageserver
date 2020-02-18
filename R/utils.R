@@ -296,7 +296,7 @@ look_backward <- function(text) {
     )
     list(
         full_token = na_to_empty_string(matches[1]),
-        namepsace  = na_to_empty_string(matches[2]),
+        package  = na_to_empty_string(matches[2]),
         accessor = na_to_empty_string(matches[3]),
         symbol = na_to_empty_string(matches[4]),
         extractor = na_to_empty_string(matches[5]),

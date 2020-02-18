@@ -20,12 +20,12 @@ hover_reply <- function(id, uri, workspace, document, point) {
     range <- token_result$range
 
     if (is.null(token_result$package)) {
-        signs <- workspace$guess_namespace(token_result$token)
+        signs <- workspace$guess_namespace(token_result$symbol)
     } else {
         signs <- token_result$package
     }
 
-    sig <- workspace$get_signature(token_result$token, signs,
+    sig <- workspace$get_signature(token_result$symbol, signs,
         exported_only = token_result$accessor != ":::")
     contents <- NULL
     resolved <- FALSE
@@ -35,7 +35,7 @@ hover_reply <- function(id, uri, workspace, document, point) {
 
     xdoc <- workspace$get_parse_data(uri)$xml_doc
 
-    if (token_result$accessor == "" && !is.null(xdoc)) {
+    if (token_result$accessor == "" && token_result$extractor == "" && !is.null(xdoc)) {
         row <- point$row + 1
         col <- point$col + 1
         token <- xdoc_find_token(xdoc, row, col)
@@ -132,9 +132,9 @@ hover_reply <- function(id, uri, workspace, document, point) {
     }
 
     if (!resolved) {
-        contents <- workspace$get_help(token_result$token, token_result$package)
+        contents <- workspace$get_help(token_result$symbol, token_result$package)
         if (is.null(contents) && !is.null(sig)) {
-            doc <- workspace$get_documentation(token_result$token, token_result$package)
+            doc <- workspace$get_documentation(token_result$symbol, token_result$package)
             doc_string <- NULL
             if (is.character(doc)) {
                 doc_string <- doc
