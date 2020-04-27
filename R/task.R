@@ -62,7 +62,9 @@ TaskManager <- R6::R6Class("TaskManager",
         add_task = function(id, task) {
             private$pending_tasks$set(id, task)
         },
-        run_tasks = function(cpu_load = 0.5, delay = 0.5) {
+        run_tasks = function(
+            cpu_load = getOption("languageserver.task_manager.cpu_load", 0.5),
+            delay = getOption("languageserver.task_manager.delay", 0.5)) {
             n <- max(max(private$cpus * cpu_load, 1) - private$running_tasks$size(), 0)
             ids <- private$pending_tasks$keys()
             if (length(ids) > n) {
