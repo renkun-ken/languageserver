@@ -106,8 +106,13 @@ text_document_document_symbol  <- function(self, id, params) {
     reply <- document_symbol_reply(id, uri, self$workspace, document,
         self$ClientCapabilities$textDocument$documentSymbol)
     if (is.null(reply)) {
-        queue <- self$pending_replies$get(uri)[["textDocument/documentSymbol"]]
-        queue$push(list(
+        name <- "textDocument/documentSymbol"
+        pending_replies <- self$pending_replies$get(uri)
+        pending_reply <- pending_replies$get(name, NULL)
+        if (!is.null(pending_reply)) {
+            self$deliver(Response$new(pending_reply$id))
+        }
+        pending_replies$set(name, list(
             id = id,
             version = document$version,
             params = params
@@ -153,8 +158,13 @@ text_document_document_link  <- function(self, id, params) {
     rootPath <- if (length(self$rootPath)) self$rootPath else dirname(path_from_uri(uri))
     reply <- document_link_reply(id, uri, self$workspace, document, rootPath)
     if (is.null(reply)) {
-        queue <- self$pending_replies$get(uri)[["textDocument/documentLink"]]
-        queue$push(list(
+        name <- "textDocument/documentLink"
+        pending_replies <- self$pending_replies$get(uri)
+        pending_reply <- pending_replies$get(name, NULL)
+        if (!is.null(pending_reply)) {
+            self$deliver(Response$new(pending_reply$id))
+        }
+        pending_replies$set(name, list(
             id = id,
             version = document$version,
             params = params
@@ -182,8 +192,13 @@ text_document_document_color  <- function(self, id, params) {
     document <- self$workspace$documents$get(uri)
     reply <- document_color_reply(id, uri, self$workspace, document)
     if (is.null(reply)) {
-        queue <- self$pending_replies$get(uri)[["textDocument/documentColor"]]
-        queue$push(list(
+        name <- "textDocument/documentColor"
+        pending_replies <- self$pending_replies$get(uri)
+        pending_reply <- pending_replies$get(name, NULL)
+        if (!is.null(pending_reply)) {
+            self$deliver(Response$new(pending_reply$id))
+        }
+        pending_replies$set(name, list(
             id = id,
             version = document$version,
             params = params

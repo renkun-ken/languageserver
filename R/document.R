@@ -297,20 +297,15 @@ parse_callback <- function(self, uri, version, parse_data) {
     }
 
     pending_replies <- self$pending_replies$get(uri, NULL)
-    for (name in names(pending_replies)) {
-        queue <- pending_replies[[name]]
+    for (name in pending_replies$keys()) {
+        pending_reply <- pending_replies$get(name)
         handler <- self$request_handlers[[name]]
-        while (queue$size()) {
-            item <- queue$peek()
-            if (is.null(version) || item$version == version) {
-                handler(self, item$id, item$params)
-                queue$pop()
-            } else if (item$version < version) {
-                self$deliver(Response$new(item$id))
-                queue$pop()
-            } else {
-                break
-            }
+        if (is.null(version) || pending_reply$version == version) {
+            handler(self, pending_reply$id, pending_reply$params)
+            pending_replies$remove(name)
+        } else if (pending_reply$version < version) {
+            self$deliver(Response$new(pending_reply$id))
+            pending_replies$remove(name)
         }
     }
 }

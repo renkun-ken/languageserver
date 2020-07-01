@@ -89,6 +89,7 @@ Response <- R6::R6Class("Response",
                 result = self$result
             )
             if (!is.null(self$error)) {
+                payload$result <- NULL
                 payload$error <- self$error
             }
             jsonlite::toJSON(payload, auto_unbox = TRUE, null = "null", force = TRUE)
@@ -115,8 +116,7 @@ ErrorCodes <- list(
 #'
 #' Message sent as the result of a [Request] in case of an error.
 #' @keywords internal
-ResponseErrorMessage <- R6::R6Class(
-    "Response",
+ResponseErrorMessage <- R6::R6Class("ResponseErrorMessage",
     inherit = Response,
     public = list(
         initialize = function(id, errortype, message = NULL) {

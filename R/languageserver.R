@@ -94,11 +94,7 @@ LanguageServer <- R6::R6Class("LanguageServer",
                 uri, document, run_lintr = FALSE, parse = FALSE, delay = 0) {
 
             if (!self$pending_replies$has(uri)) {
-                self$pending_replies$set(uri, list(
-                    `textDocument/documentSymbol` = collections::queue(),
-                    `textDocument/documentLink` = collections::queue(),
-                    `textDocument/documentColor` = collections::queue()
-                ))
+                self$pending_replies$set(uri, collections::dict())
             }
 
             if (run_lintr && self$run_lintr) {
