@@ -50,7 +50,7 @@ ServerCapabilities <- list(
     # typeDefinitionProvider = FALSE,
     # implementationProvider = FALSE,
     definitionProvider = TRUE,
-    # referencesProvider = FALSE
+    referencesProvider = TRUE,
     documentHighlightProvider = TRUE,
     documentSymbolProvider = TRUE,
     workspaceSymbolProvider = TRUE,
@@ -59,7 +59,7 @@ ServerCapabilities <- list(
     documentFormattingProvider = TRUE,
     documentRangeFormattingProvider = TRUE,
     documentOnTypeFormattingProvider = DocumentOnTypeFormattingOptions,
-    # renameProvider = FALSE,
+    renameProvider = TRUE,
     documentLinkProvider = DocumentLinkOptions,
     colorProvider = TRUE,
     foldingRangeProvider = TRUE
