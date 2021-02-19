@@ -300,6 +300,12 @@ parser_hooks <- list(
             action$update(packages = packages)
         }
     },
+    "source" = function(expr, action) {
+        call <- match.call(base::source, as.call(expr))
+        if (is.character(call$file) && (is.null(call$local) || identical(call$local, FALSE))) {
+            action$update(sources = call$file)
+        }
+    },
     "system.time" = function(expr, action) action$parse_args("expr"),
     "try" = function(expr, action) action$parse_args("expr"),
     "tryCatch" = function(expr, action) action$parse_args(c("expr", "finally")),
@@ -407,6 +413,7 @@ parse_document <- function(uri, content) {
         parse_env <- function() {
             env <- new.env(parent = .GlobalEnv)
             env$packages <- character()
+            env$sources <- character()
             env$nonfuncts <- character()
             env$functs <- character()
             env$formals <- list()
