@@ -109,7 +109,7 @@ text_document_did_close <- function(self, params) {
     }
 
     # do not remove document in package
-    if (!(is_package(self$rootPath) && is_from_workspace)) {
+    if (!(is_package(self$rootPath) && is_from_workspace) && !is_sourced) {
         diagnostics_callback(self, uri, NULL, list())
         self$workspace$documents$remove(uri)
         self$workspace$update_loaded_packages()
