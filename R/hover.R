@@ -23,7 +23,7 @@ hover_reply <- function(id, uri, workspace, document, point) {
     resolved <- FALSE
 
     version <- workspace$get_parse_data(uri)$version
-    logger$info("hover:", list(uri = uri, version = version))
+    logger$info("hover:", list(uri = uri, version = version, token = token_result))
 
     xdoc <- workspace$get_parse_data(uri)$xml_doc
 
@@ -197,11 +197,24 @@ hover_reply <- function(id, uri, workspace, document, point) {
                 resolved <- TRUE
             } else if (token_name == "NUM_CONST") {
                 # logical, integer, double
-                # contents <- "number"
-                # resolved <- TRUE
+                obj <- parse(text = token_text, keep.source = FALSE)[[1]]
+                str <- trimws(utils::capture.output(utils::str(obj)))
+                contents <- sprintf("```\n%s\n```", str)
+                resolved <- TRUE
             } else if (token_name == "STR_CONST") {
                 # string literal
-                # contents <- "string"
+                token_line1 <- as.integer(xml_attr(token, "line1"))
+                token_line2 <- as.integer(xml_attr(token, "line2"))
+                token_col1 <- as.integer(xml_attr(token, "col1"))
+                token_col2 <- as.integer(xml_attr(token, "col2"))
+                expr <- get_range_text(document$content,
+                    token_line1, token_col1, token_line2, token_col2)
+                str <- parse(text = expr, keep.source = FALSE)[[1]]
+                logger$info("hover: ", list(
+                    expr = expr,
+                    str = str
+                ))
+                contents <- sprintf("```\nchr (%d)\n```", nchar(str))
                 resolved <- TRUE
             } else if (token_name == "COMMENT") {
                 # comment
