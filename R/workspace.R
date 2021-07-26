@@ -9,6 +9,7 @@ startup_packages <- c("base", "methods", "datasets", "utils", "grDevices", "grap
 Workspace <- R6::R6Class("Workspace",
     public = list(
         root = NULL,
+        is_package = NULL,
         namespaces = NULL,
         global_env = NULL,
         documents = NULL,
@@ -25,6 +26,7 @@ Workspace <- R6::R6Class("Workspace",
 
         initialize = function(root) {
             self$root <- root
+            self$is_package <- is_package(root)
             self$documents <- collections::dict()
             self$imported_objects <- collections::dict()
             self$imported_packages <- character(0)

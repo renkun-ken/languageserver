@@ -459,7 +459,7 @@ find_package <- function(path = getwd()) {
 #' @noRd
 is_package <- function(rootPath) {
     file <- file.path(rootPath, "DESCRIPTION")
-    file.exists(file) && !dir.exists(file)
+    isTRUE(file.exists(file) && !dir.exists(file))
 }
 
 #' read a character from stdin
