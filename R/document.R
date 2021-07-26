@@ -440,6 +440,12 @@ parse_callback <- function(self, uri, version, parse_data) {
 
     parse_data$version <- version
     old_parse_data <- doc$parse_data
+
+    parse_data$sources <- unlist(lapply(parse_data$sources, function(source) {
+        source_path <- fs::path_abs(source, self$rootPath)
+        if (file.exists(source_path)) source_path
+    }))
+
     self$workspace$update_parse_data(uri, parse_data)
 
     if (!identical(old_parse_data$packages, parse_data$packages)) {
@@ -469,9 +475,7 @@ parse_callback <- function(self, uri, version, parse_data) {
         }
     }
 
-    for (source_file in parse_data$sources) {
-        source_path <- fs::path_abs(source_file, self$rootPath)
-        if (!file.exists(source_path)) next
+    for (source_path in parse_data$sources) {
         source_uri <- path_to_uri(source_path)
         if (self$workspace$documents$has(source_uri)) next
         source_doc <- Document$new(source_uri, NULL, stringi::stri_read_lines(source_path))
