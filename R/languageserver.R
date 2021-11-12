@@ -183,6 +183,18 @@ LanguageServer <- R6::R6Class("LanguageServer",
                     break
                 }
             }
+        },
+
+        resize_session_pool = function(new_size) {
+            parse_pool <- self$parse_task_manager$get_session_pool()
+            if (!is.null(parse_pool)) {
+                parse_pool$resize(new_size)
+            }
+
+            diagnostics_pool <- self$diagnostics_task_manager$get_session_pool()
+            if (!is.null(diagnostics_pool)) {
+                diagnostics_pool$resize(new_size)
+            }
         }
     )
 )

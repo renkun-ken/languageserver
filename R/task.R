@@ -137,6 +137,9 @@ TaskManager <- R6::R6Class("TaskManager",
                     running_tasks$remove(key)
                 }
             }
+        },
+        get_session_pool = function() {
+            private$session_pool
         }
     )
 )

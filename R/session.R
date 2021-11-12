@@ -148,14 +148,16 @@ Session <- R6::R6Class("Session",
         get_result = function() {
             private$result
         },
+        close = function(grace = 100) {
+            tryCatch({
+                private$session$close(grace = grace)
+            }, error = function(e) {
+                logger$error(private$pool_name, "session close error", ret)
+            })
+        },
         restart = function(should_release = FALSE) {
             logger$info(private$pool_name, "session restart", private$id)
-            ret <- tryCatch({
-                private$session$close(grace = 100)
-            }, error = function(e) e)
-            if (inherits(ret, "error")) {
-                logger$error(private$pool_name, "session kill error", ret)
-            }
+            self$close()
 
             private$session <- callr::r_session$new(
                 callr::r_session_options(system_profile = TRUE, user_profile = TRUE),
@@ -209,7 +211,8 @@ SessionPool <- R6::R6Class("SessionPool",
         sessions = NULL,
         pending_size = 0,
         idle_size = 0,
-        size = 0
+        size = 0,
+        target_size = 0
     ),
     public = list(
         initialize = function(size, name) {
@@ -219,6 +222,7 @@ SessionPool <- R6::R6Class("SessionPool",
 
             if (size > 0) {
                 private$size <- size
+                private$target_size <- size
                 for (i in seq_len(size)) {
                     istr <- as.character(i)
                     private$sessions$set(istr, Session$new(istr, self, name))
@@ -235,7 +239,6 @@ SessionPool <- R6::R6Class("SessionPool",
                 private$idle_size <- private$idle_size - 1
                 session_id <- private$idle_keys$pop()
                 if (!is.null(session_id)) {
-                    # FIXME: remove debug
                     logger$info(private$pool_name, "session acquired session_id =", session_id, "remain pool size =", private$idle_size)
                     return(private$sessions$get(session_id))
                 }
@@ -244,10 +247,46 @@ SessionPool <- R6::R6Class("SessionPool",
         },
         # called by child session
         release = function(id) {
-            private$idle_keys$push(id)
-            private$idle_size <- private$idle_size + 1
-            # FIXME: remove debug
-            logger$info(private$pool_name, "session released session_id =", id, "remain pool size =", private$idle_size)
+            if (private$target_size < private$size) {
+                private$sessions$get(id)$close()
+                private$sessions$remove(id)
+                private$size <- private$size - 1
+            } else {
+                private$idle_keys$push(id)
+                private$idle_size <- private$idle_size + 1
+            }
+            logger$info(private$pool_name, "session released session_id =", id, "remain pool size =", private$idle_size, "total size =", private$size, "target size =", private$target_size)
+        },
+        resize = function(new_size) {
+            if (new_size > 0) {
+                logger$info("resize", private$pool_name, "from", private$size, "to", new_size)
+                private$target_size <- new_size
+                if (new_size > private$size) {
+                    # add new sessions
+                    for (i in seq_len(new_size - private$size)) {
+                        istr <- as.character(private$size + i)
+                        private$sessions$set(istr, Session$new(istr, self, private$pool_name))
+                        private$idle_keys$push(istr)
+                        private$idle_size <- private$idle_size + 1
+                        private$size <- private$size + 1
+                    }
+                } else {
+                    # remove idle sessions
+                    for (i in seq_len(private$size - new_size)) {
+                        id <- private$idle_keys$pop()
+                        if (!is.null(id)) {
+                            logger$info("close session", id, "from", private$pool_name)
+                            private$sessions$get(id)$close()
+                            private$sessions$remove(id)
+                            private$idle_size <- private$idle_size - 1
+                            private$size <- private$size - 1
+                        }
+                    }
+                    logger$info(private$pool_name, "current size", private$size, "target size", new_size)
+                }
+            } else {
+                logger$error(private$pool_name, "invalid pool size", new_size)
+            }
         }
     )
 )

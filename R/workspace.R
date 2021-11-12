@@ -262,6 +262,7 @@ Workspace <- R6::R6Class("Workspace",
                 langserver$text_sync(uri, document = doc, parse = TRUE)
             }
             self$import_from_namespace_file()
+            langserver$resize_session_pool(1)
         },
 
         import_from_namespace_file = function() {
