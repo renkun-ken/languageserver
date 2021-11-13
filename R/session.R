@@ -258,7 +258,7 @@ SessionPool <- R6::R6Class("SessionPool",
             logger$info(private$pool_name, "session released session_id =", id, "remain pool size =", private$idle_size, "total size =", private$size, "target size =", private$target_size)
         },
         resize = function(new_size) {
-            if (new_size > 0) {
+            if (private$target_size != new_size) {
                 logger$info("resize", private$pool_name, "from", private$size, "to", new_size)
                 private$target_size <- new_size
                 if (new_size > private$size) {
@@ -284,8 +284,6 @@ SessionPool <- R6::R6Class("SessionPool",
                     }
                     logger$info(private$pool_name, "current size", private$size, "target size", new_size)
                 }
-            } else {
-                logger$error(private$pool_name, "invalid pool size", new_size)
             }
         }
     )

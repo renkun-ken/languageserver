@@ -75,7 +75,8 @@ TaskManager <- R6::R6Class("TaskManager",
         running_tasks = NULL,
         session_pool = NULL,
         name = NULL,
-        use_session = FALSE
+        use_session = FALSE,
+        target_pool_size = NULL
     ),
     public = list(
         initialize = function(name, session_pool = NULL) {
@@ -137,9 +138,13 @@ TaskManager <- R6::R6Class("TaskManager",
                     running_tasks$remove(key)
                 }
             }
+
+            if (private$use_session && !is.null(private$target_pool_size) && running_tasks$size() == 0 && pending_tasks$size() == 0) {
+                private$session_pool$resize(private$target_pool_size)
+            }
         },
-        get_session_pool = function() {
-            private$session_pool
+        resize_session_pool = function(new_size) {
+            private$target_pool_size <- new_size
         }
     )
 )
