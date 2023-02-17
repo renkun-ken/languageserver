@@ -9,7 +9,7 @@ FileChangeType <- list(
 #' Handler to the `workspace/didChangeWorkspaceFolders` [Notification].
 #' @noRd
 workspace_did_change_workspace_folder_params <- function(self, params) {
-
+    logger$info("workspace_did_change_workspace_folder_params: ", params)
 }
 
 #' `workspace/didChangeConfiguration` notification handler
@@ -82,6 +82,7 @@ workspace_did_change_watched_files <- function(self, params) {
 #' Handler to the `workspace/symbol` [Request].
 #' @noRd
 workspace_symbol <- function(self, id, params) {
+    logger$info("workspace_symbol: ", params)
     self$deliver(workspace_symbol_reply(
             id, self$workspace, params$query))
 }
