@@ -9,6 +9,7 @@ startup_packages <- c("base", "methods", "datasets", "utils", "grDevices", "grap
 Workspace <- R6::R6Class("Workspace",
     public = list(
         root = NULL,
+        session = NULL,
         namespaces = NULL,
         global_env = NULL,
         documents = NULL,
@@ -25,14 +26,27 @@ Workspace <- R6::R6Class("Workspace",
 
         initialize = function(root) {
             self$root <- root
+            self$session <- with_wd(root,
+                callr::r_session$new(
+                    callr::r_session_options(
+                        system_profile = TRUE,
+                        user_profile = TRUE
+                    ),
+                    wait = TRUE
+                )
+            )
+            logger$info("workspace initialize: ", list(
+                root = self$root,
+                session = self$session$get_pid()
+            ))
+
             self$documents <- collections::dict()
             self$imported_objects <- collections::dict()
             self$imported_packages <- character(0)
             self$global_env <- GlobalEnv$new(self$documents)
             self$namespaces <- collections::dict()
             self$startup_packages <- tryCatch(
-                callr::r(resolve_attached_packages,
-                    system_profile = TRUE, user_profile = TRUE, timeout = 3),
+                self$session$run(resolve_attached_packages),
                 error = function(e) {
                     logger$info("workspace initialize error: ", e)
                     startup_packages
@@ -40,7 +54,10 @@ Workspace <- R6::R6Class("Workspace",
             )
             self$loaded_packages <- self$startup_packages
             for (pkgname in self$loaded_packages) {
-                self$namespaces$set(pkgname, PackageNamespace$new(pkgname))
+                ns <- self$session$run(function(pkgname) {
+                    languageserver:::PackageNamespace$new(pkgname)
+                }, list(pkgname = pkgname))
+                self$namespaces$set(pkgname, ns)
             }
             self$help_cache <- collections::dict()
         },
@@ -97,12 +114,16 @@ Workspace <- R6::R6Class("Workspace",
                 self$global_env
             } else if (self$namespaces$has(pkgname)) {
                 self$namespaces$get(pkgname)
-            } else if (length(find.package(pkgname, quiet = TRUE))) {
-                ns <- PackageNamespace$new(pkgname)
-                self$namespaces$set(pkgname, ns)
-                ns
             } else {
-                NULL
+                ns <- self$session$run(function(pkgname) {
+                    if (length(find.package(pkgname, quiet = TRUE))) {
+                        languageserver:::PackageNamespace$new(pkgname)
+                    }
+                }, list(pkgname = pkgname))
+                if (!is.null(ns)) {
+                    self$namespaces$set(pkgname, ns)
+                }
+                ns
             }
         },
 
@@ -138,13 +159,15 @@ Workspace <- R6::R6Class("Workspace",
             }
             # note: the parantheses are neccessary
             hfile <- tryCatch({
-                    if (is.null(pkgname)) {
-                        utils::help((topic))
-                    } else {
-                        utils::help((topic), (pkgname))
-                    }
+                    self$session$run(function(topic, pkgname) {
+                        if (is.null(pkgname)) {
+                            utils::help((topic))
+                        } else {
+                            utils::help((topic), (pkgname))
+                        }
+                    }, list(topic = topic, pkgname = pkgname))
                 },
-                error = function(e) character(0)
+                error = function(e) character()
             )
 
             if (length(hfile) > 0) {
