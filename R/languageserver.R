@@ -23,8 +23,6 @@ LanguageServer <- R6::R6Class("LanguageServer",
         inputcon = NULL,
         outputcon = NULL,
         exit_flag = NULL,
-
-        documents = NULL,
         workspace = NULL,
 
         processId = NULL,

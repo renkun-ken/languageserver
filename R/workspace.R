@@ -7,6 +7,14 @@ startup_packages <- c("base", "methods", "datasets", "utils", "grDevices", "grap
 #' that are loaded during the session for quick reference.
 #' @noRd
 Workspace <- R6::R6Class("Workspace",
+    private = list(
+        finalize = function() {
+            if (!is.null(self$session)) {
+                self$close()
+            }
+            super$finalize()
+        }
+    ),
     public = list(
         root = NULL,
         session = NULL,
